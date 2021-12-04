@@ -320,7 +320,7 @@ fwrite(total2, "./data/data_api/envdatarqst_strawberry.csv")
 
 
 # 상세 기능 2
-URL = "http://apis.data.go.kr/1390000/SmartFarmdata/grwdatarqst"
+URL = "http://apis.data.go.kr/1390000/SmartFarmdata/prddatarqst"
 searchFrmhsCode = c("S17", "S21", "S23", "S26", "S29", "S31", "S32", "S33")
 pageSize = 10000
 
@@ -338,7 +338,7 @@ for(i in 1:length(searchFrmhsCode)){
 
 
 total<-list()
-
+i=1
 for(i in 1:length(urllist)){
   
   item <- list()
