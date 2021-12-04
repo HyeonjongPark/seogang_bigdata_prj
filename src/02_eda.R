@@ -42,11 +42,15 @@
 # 생산량
 
 ## 
+rm(list = ls())
+
 library(data.table)
 library(tidyr)
 library(highcharter)
 library(quantmod)
 library(lubridate)
+library(dplyr)
+library(forecast)
 
 paprika = fread("./data/data_api/paprika.csv", encoding = "UTF-8") %>% as.data.frame() %>% arrange(measDtStr)
 
@@ -104,29 +108,29 @@ paprika[paprika$cunt == 0 & paprika$ph != 0 , ]
 
 paprika2 = paprika %>% 
               group_by(frmhsId, frmDate, frmMonth_x, frmHours) %>% 
-              summarise(max_inTp = max(inTp, na.rm = T),
-                        min_inTp = min(inTp, na.rm = T),
+              summarise(#max_inTp = max(inTp, na.rm = T),
+                        #min_inTp = min(inTp, na.rm = T),
                         avg_inTp = mean(inTp, na.rm = T),
-                        max_inHd = max(inHd, na.rm = T),
-                        min_inHd = min(inHd, na.rm = T),
+                        #max_inHd = max(inHd, na.rm = T),
+                        #min_inHd = min(inHd, na.rm = T),
                         avg_inHd = mean(inHd, na.rm = T),
-                        max_outTp = max(outTp, na.rm = T),
-                        min_outTp = min(outTp, na.rm = T),
+                        #max_outTp = max(outTp, na.rm = T),
+                        #min_outTp = min(outTp, na.rm = T),
                         avg_outTp = mean(outTp, na.rm = T),
-                        max_outWs = max(outWs, na.rm = T),
-                        min_outWs = min(outWs, na.rm = T),
+                        #max_outWs = max(outWs, na.rm = T),
+                        #min_outWs = min(outWs, na.rm = T),
                         avg_outWs = mean(outWs, na.rm = T),
-                        max_inCo2 = max(inCo2, na.rm = T),
-                        min_inCo2 = min(inCo2, na.rm = T),
+                        #max_inCo2 = max(inCo2, na.rm = T),
+                        #min_inCo2 = min(inCo2, na.rm = T),
                         avg_inCo2 = mean(inCo2, na.rm = T),
                         sum_cunt = sum(cunt, na.rm = T), # 급액 횟수 총합
                         sum_daysuplyqy = sum(daysuplyqy, na.rm = T), # 급액 량 총합
                         avg_otmsuplyqy = mean(otmsuplyqy, na.rm = T),
-                        max_ph = max(ph, na.rm = T),
-                        min_ph = min(ph, na.rm = T),
+                        #max_ph = max(ph, na.rm = T),
+                        #min_ph = min(ph, na.rm = T),
                         avg_ph = mean(ph, na.rm = T),
-                        max_ec = max(ec, na.rm = T),
-                        min_ec = min(ec, na.rm = T),
+                        #max_ec = max(ec, na.rm = T),
+                        #min_ec = min(ec, na.rm = T),
                         avg_ec = mean(ec, na.rm = T),
                         avg_outtrn = mean(outtrn, na.rm = T)) %>% as.data.frame() # 급액 ph 값
 
@@ -143,175 +147,8 @@ for(colname in colnames(paprika2)) {
   })
 }
 
-# 농가 별 측정일시
-paprika2 %>% 
-  group_by(frmhsId, frmHours) %>% 
-  summarise(n = n()) %>% 
-  as.data.frame() 
+paprika2 %>% head
 
-
-
-
-library(dplyr)
-library(data.table)
-library(plyr)
-library(xgboost)
-library(car)
-library(caret)
-
-data = paprika2
-data$frmDate = NULL
-
-# 더미 변수를 이용해 원 핫 인코딩
-dmy <- dummyVars(~., data = data)
-data2 <- data.frame(predict(dmy, newdata = data))
-
-data2$index = 1:nrow(data2)
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-
-set.seed(123)
-proportion = 0.7
-idx = sample(1:nrow(data2), size = round(proportion * nrow(data2)))
-train = data2[idx, ]
-test = data2[-idx, ]
-
-id = test$index
-
-y_train = train$avg_outtrn
-
-#features <- colnames(train)[2:ncol(train)]
-
-set.seed(123)
-
-#######################################################################
-############################ XGB ###################################### 
-#######################################################################
-
-
-
-trainSparse = xgb.DMatrix(data.matrix(train[,-c(1,length(train))]), label=ylabels, missing=NA)
-testSparse  = xgb.DMatrix(data.matrix(test[,-c(1,length(test))]), missing = NA)
-#236
-
-foldsCV <- createFolds(y_train, k=20, list=TRUE, returnTrain=FALSE)
-
-
-set.seed(123)
-
-### 모델링
-cat("modeling\n")
-
-param.xgb <- list(subsample = 1
-                  , max_depth = 5
-                  , colsample_bytree = 0.5
-                  , eta = 0.08
-                  , eval_metric = 'rmse'#average
-                  , min_child_weight = 1.2)
-
-
-
-xgb_cv <- xgb.cv(data=trainSparse,
-                 params=param.xgb,
-                 nrounds=300,
-                 prediction=TRUE,
-                 maximize=TRUE,
-                 folds=foldsCV,
-                 #early_stopping_rounds = 50,
-                 print_every_n = 5
-)
-
-
-mod.xgb = xgboost(data = trainSparse,
-                  eta = 0.08,
-                  nfold = 5, #5
-                  max_depth = 5, # 5
-                  min_child_weight = 1.2,
-                  gamma = 0,
-                  nround = 300, # 70
-                  subsample = 1,
-                  colsample_bytree = 0.5,
-                  eval_metric = 'rmse',
-                  verbose = 1)
-
-# 변수 중요도
-xgb_imp = xgb.importance(model = mod.xgb)
-
-# 도식화 -> top 10
-xgb.plot.importance(xgb_imp, top_n = 10)
-
-xgb_prob = data.frame(id = id, real = test$avg_outtrn, pred = predict(mod.xgb,testSparse))
-
-
-
-
-
-
-#######################################################################
-############################ LGB ###################################### 
-#######################################################################
-
-library(Matrix)
-library(lightgbm)
-
-train_sparse = Matrix(as.matrix(train[,-c(1,length(train))]), sparse=TRUE)
-test_sparse  = Matrix(as.matrix(test[,-c(1,length(test))]), sparse=TRUE)
-
-lgb.train = lgb.Dataset(data=train_sparse, label=y_train)
-lgb.param = list(boosting_type = "gbdt",
-                 metric = "rmse",
-                 sub_feature = 0.9,
-                 bagging_fraction = 0.8,
-                 bagging_freq = 1, 
-                 min_split_gain = 0.01,
-                 # min_data = 50,
-                 reg_alpha = 0.1,
-                 reg_lambda = 0.1)
-#min_hessian = 0.001)
-
-lgb.normalizedgini = function(preds, dtrain){
-  actual = getinfo(dtrain, "label")
-  score  = NormalizedGini(preds,actual)
-  return(list(name = "gini", value = score, higher_better = TRUE))
-}
-
-# lgb.model.cv = lgb.cv(params = lgb.grid, data = lgb.train, learning_rate = 0.01, num_leaves = 100,
-#                       num_threads = 15 , nrounds = 1000, early_stopping_rounds = 50,
-#                       eval_freq = 20, eval = lgb.normalizedgini, nfold = 20, stratified = TRUE)
-# 
-# best.iter = lgb.model.cv$best_iter
-# best.iter
-
-
-
-################
-
-best.iter = 300
-
-# Train final model
-mod.lgb = lgb.train(params = lgb.param, data = lgb.train, learning_rate = 0.03,
-                    num_leaves = 60, num_threads = 30 , nrounds = best.iter,
-                    eval_freq = 10, eval = lgb.normalizedgini)
-
-################
-
-
-
-lgb_prob = data.frame(id = id, real = test$avg_outtrn, pred = predict(mod.lgb,testSparse))
-
-
-
-
-
-
-#######################################################################
-############################ RF ####################################### 
-#######################################################################
-
-
-#######################################################################
-############################ GBM ###################################### 
-#######################################################################
-
-
+fwrite(paprika2, "./data/data_api/prep/paprika_prep.csv", bom = TRUE)
 
 
