@@ -48,3 +48,5 @@ all.html
 /src/99_bkup.R
 
 /out/
+*.html
+

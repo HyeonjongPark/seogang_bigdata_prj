@@ -203,7 +203,7 @@ paprika2 = paprika %>%
   arrange(year_week)
 
 paprika2 %>% head
-paprika2$outtrn = paprika2$outtrn / paprika2$frmAr # 단위 면적당 생산량으로 변경
+#paprika2$outtrn = paprika2$outtrn / paprika2$frmAr # 단위 면적당 생산량으로 변경
 
 paprika2 = paprika2 %>% 
   group_by(frmhsId, year_week, frmMonth_x,) %>% 
@@ -246,8 +246,32 @@ for(farm in unique(paprika2$frmhsId)) {
   paprika3 = rbind(paprika3, temp)
 }
 
-paprika3
+paprika3 %>% head
 paprika3 = paprika3[,c(ncol(paprika3),1:(ncol(paprika3)-1))]
 
 
 fwrite(paprika3, "./data/data_api/prep/paprika_prep_weeks.csv", bom = TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################
+### dacon data 결합 ####
+########################
+
+paprika3
+dacon_data4 = fread("./data/data_api/prep/dacon_prep.csv")
+
+paprika4 = left_join(paprika3, dacon_data4)
+
+fwrite(paprika4, "./data/data_api/prep/paprika_prep_weeks2.csv", bom = TRUE)
+

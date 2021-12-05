@@ -47,3 +47,44 @@ total2 <- rbindlist(total)
 
 fwrite(total2, "./data/data_api/envdatarqst_strawberry.csv")
 
+
+
+
+
+
+## dacon data - 노지 데이터 가격, 거래량
+
+dacon_data = fread("./data/datazip/public_data/train.csv", encoding = "UTF-8") %>% as.data.frame()
+dacon_data$date = ymd(dacon_data$date)
+dacon_data %>% colnames
+dacon_data = dacon_data[,c(1,2,27,28)]
+colnames(dacon_data) = c("date", "days", "volume", "price")
+# 2017-07-31 ~ 
+# 2018-11-27 
+dacon_data2 = dacon_data %>% filter(date >= "2017-07-31", date <= "2018-11-27")
+
+
+dacon_data2$week = ifelse(str_length(week(dacon_data2$date)) == 1, 
+                      paste0("0",week(dacon_data2$date)),
+                      week(dacon_data2$date))
+
+dacon_data2$year = year(dacon_data2$date)
+
+dacon_data3 = dacon_data2 %>% 
+  mutate(year_week = paste(year, week, sep = "_")) %>% 
+  arrange(year_week)
+
+dacon_data3$price = ifelse(dacon_data3$price == 0, NA, dacon_data3$price)
+
+dacon_data4 = dacon_data3 %>% 
+  group_by(year_week) %>% 
+  summarise(avg_price = mean(price, na.rm = TRUE),
+            avg_volume = mean(volume, na.rm = TRUE)) %>% 
+  arrange(year_week)
+
+
+fwrite(dacon_data4, "./data/data_api/prep/dacon_prep.csv")
+
+
+
+

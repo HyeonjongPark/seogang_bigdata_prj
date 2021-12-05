@@ -7,7 +7,7 @@ library(quantmod)
 library(lubridate)
 library(corrplot)
 library(DataExplorer)
-
+library(stringr)
 
 library(car)
 library(caret)

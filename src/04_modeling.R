@@ -30,7 +30,7 @@ colSums(is.na(data2))
 
 
 #############
-## 주 단위 ##
+## 주 단위 ## ver1
 
 data = fread("./data/data_api/prep/paprika_prep_weeks.csv") %>% as.data.frame()
 data$year_week = NULL
@@ -60,6 +60,103 @@ data2 %>% head
 ############
 
 
+
+
+
+
+#############
+## 주 단위 + dacon data ver2
+
+data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
+
+data$year_week = NULL
+# 더미 변수를 이용해 원 핫 인코딩
+dmy <- dummyVars(~., data = data)
+data2 <- data.frame(predict(dmy, newdata = data))
+
+data2 %>% head
+data2 %>% tail
+
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+
+data2$index = 1:nrow(data2)
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+
+data2 %>% head
+dim(data2)
+colnames(data2[colSums(is.na(data2))/nrow(data2) * 100 >= 50]) # 결측이 50% 이상 컬럼 확인
+
+
+colSums(is.na(data2))
+data2 %>% head
+data2 %>% tail
+
+colnames(data2)[ncol(data2)] = "avg_outtrn"
+
+data2 %>% head
+
+############
+
+
+
+
+
+#############
+## 주 단위 + dacon data + lag,lead ver3
+
+data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
+
+data$year_week = NULL
+# 더미 변수를 이용해 원 핫 인코딩
+dmy <- dummyVars(~., data = data)
+data2 <- data.frame(predict(dmy, newdata = data))
+
+data2 %>% head
+data2$avg_price_lead1 = lead(data2$avg_price, 1) 
+data2$avg_price_lead2 = lead(data2$avg_price, 2) 
+data2$avg_price_lead3 = lead(data2$avg_price, 3) 
+data2$avg_price_lead1 = lag(data2$avg_price, 1) 
+data2$avg_price_lead2 = lag(data2$avg_price, 2) 
+data2$avg_price_lead3 = lag(data2$avg_price, 3) 
+
+data2$avg_volume_lead1 = lead(data2$avg_volume, 1) 
+data2$avg_volume_lead2 = lead(data2$avg_volume, 2) 
+data2$avg_volume_lead3 = lead(data2$avg_volume, 3) 
+data2$avg_volume_lead1 = lag(data2$avg_volume, 1) 
+data2$avg_volume_lead2 = lag(data2$avg_volume, 2) 
+data2$avg_volume_lead3 = lag(data2$avg_volume, 3) 
+
+data2 = data2[-c(1:3),]
+
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+
+data2$index = 1:nrow(data2)
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+
+data2 %>% head
+dim(data2)
+colnames(data2[colSums(is.na(data2))/nrow(data2) * 100 >= 50]) # 결측이 50% 이상 컬럼 확인
+
+
+colSums(is.na(data2))
+data2 %>% head
+data2 %>% tail
+
+colnames(data2)[ncol(data2)] = "avg_outtrn"
+
+data2 %>% head
+
+
+
+############
 
 
 
@@ -385,11 +482,13 @@ out = do.call("cbind", list(out.lm,
 out = out[c(1,2,grep("pred",colnames(out)))]
 
 #fwrite(out, "./out/pred_out_days.csv")
-fwrite(out, "./out/pred_out_weeks.csv")
+#fwrite(out, "./out/pred_out_weeks.csv")
+# fwrite(out, "./out/pred_out_weeks2.csv")
+fwrite(out, "./out/pred_out_weeks3.csv")
 
 lm_eval = cbind(model_name = "Regression", forecast::accuracy(out.lm$real, out.lm$lm_pred+1))
 rdf_eval = cbind(model_name = "RF", forecast::accuracy(out.rdf$real, out.rdf$rdf_pred))
-gbm_eval = cbind(model_name = "GBM", forecast::accuracy(out.gbm$real, out.gbm$gbm_pred))
+gbm_eval = cbind(model_name = "GBM", forecast::accuracy(out.gbm$real, out.gbm$gbm_pred+1))
 xgb_eval = cbind(model_name = "XGB", forecast::accuracy(out.xgb$real, out.xgb$xgb_pred+1))
 lgb_eval = cbind(model_name = "LGB", forecast::accuracy(out.lgb$real, out.lgb$lgb_pred+1))
 svr_eval = cbind(model_name = "SVR", forecast::accuracy(out.svr$real, out.svr$svr_pred+1))
@@ -407,6 +506,7 @@ eval = eval %>% arrange(RMSE)
 eval
 
 #fwrite(eval, "./out/eval_out_days.csv")
-fwrite(eval, "./out/eval_out_weeks.csv")
-
+#fwrite(eval, "./out/eval_out_weeks.csv")
+#fwrite(eval, "./out/eval_out_weeks2.csv")
+fwrite(eval, "./out/eval_out_weeks3.csv")
 
