@@ -37,3 +37,14 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+/data/
+/eda/
+/ppt/
+seogang_bigdata_prj.Rproj
+all.html
+/code_shared
+
+/src/99_bkup.R
+
+/out/
