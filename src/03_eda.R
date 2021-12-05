@@ -185,7 +185,7 @@ plot_qq(data, by = "frmHours")
 ggsave("./eda/DataExplorer/plotqq_by_frmHours.png")
 
 
-plot_prcomp(data, maxcat = 5L)
+# plot_prcomp(data, maxcat = 5L)
 
 
 

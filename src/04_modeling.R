@@ -184,7 +184,7 @@ mod.xgb = xgboost(data = trainSparse,
 
 # 변수 중요도
 xgb_imp = xgb.importance(model = mod.xgb)
-xgb.plot.importance(xgb_imp, top_n = 10)
+xgb.plot.importance(xgb_imp, top_n = 20)
 
 
 
@@ -324,14 +324,14 @@ out = do.call("cbind", list(out.lm,
                             out.svr))
 out = out[c(1,2,grep("pred",colnames(out)))]
 
+fwrite(out, "./out/pred_out.csv")
 
-
-lm_eval = cbind(model_name = "Regression", forecast::accuracy(out.lm$real, out.lm$pred+1))
-rdf_eval = cbind(model_name = "RF", forecast::accuracy(out.rdf$real, out.rdf$pred))
-gbm_eval = cbind(model_name = "GBM", forecast::accuracy(out.gbm$real, out.gbm$pred))
-xgb_eval = cbind(model_name = "XGB", forecast::accuracy(out.xgb$real, out.xgb$pred))
-lgb_eval = cbind(model_name = "LGB", forecast::accuracy(out.lgb$real, out.lgb$pred+1))
-svr_eval = cbind(model_name = "SVR", forecast::accuracy(out.svr$real, out.svr$pred+1))
+lm_eval = cbind(model_name = "Regression", forecast::accuracy(out.lm$real, out.lm$lm_pred+1))
+rdf_eval = cbind(model_name = "RF", forecast::accuracy(out.rdf$real, out.rdf$rdf_pred))
+gbm_eval = cbind(model_name = "GBM", forecast::accuracy(out.gbm$real, out.gbm$gbm_pred))
+xgb_eval = cbind(model_name = "XGB", forecast::accuracy(out.xgb$real, out.xgb$xgb_pred))
+lgb_eval = cbind(model_name = "LGB", forecast::accuracy(out.lgb$real, out.lgb$lgb_pred+1))
+svr_eval = cbind(model_name = "SVR", forecast::accuracy(out.svr$real, out.svr$svr_pred+1))
 
 eval = do.call("rbind", list(lm_eval, 
                              rdf_eval,
@@ -342,7 +342,8 @@ eval = do.call("rbind", list(lm_eval,
 
 eval = eval %>% as.data.frame()
 rownames(eval) = NULL
-eval %>% arrange(RMSE)
+eval = eval %>% arrange(RMSE)
 
+fwrite(eval, "./out/eval_out.csv")
 
 
