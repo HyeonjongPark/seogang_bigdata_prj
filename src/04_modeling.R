@@ -1,23 +1,76 @@
 
 source("./src/00_libs.R")
 
-data = fread("./data/data_api/prep/paprika_prep.csv") %>% as.data.frame()
+#############
+## 일 단위 ##
 
+data = fread("./data/data_api/prep/paprika_prep_days.csv") %>% as.data.frame()
+data %>% head
 data$frmDate = NULL
 
 # 더미 변수를 이용해 원 핫 인코딩
 dmy <- dummyVars(~., data = data)
 data2 <- data.frame(predict(dmy, newdata = data))
 
+
 data2$index = 1:nrow(data2)
 data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
 
+data2 %>% head
 dim(data2)
 colnames(data2[colSums(is.na(data2))/nrow(data2) * 100 >= 50]) # 결측이 50% 이상 컬럼 확인
 
 data2$avg_outWs = NULL
 
 colSums(is.na(data2))
+
+
+############
+
+
+
+#############
+## 주 단위 ##
+
+data = fread("./data/data_api/prep/paprika_prep_weeks.csv") %>% as.data.frame()
+data$year_week = NULL
+# 더미 변수를 이용해 원 핫 인코딩
+dmy <- dummyVars(~., data = data)
+data2 <- data.frame(predict(dmy, newdata = data))
+
+data2 %>% head
+data2 %>% tail
+
+data2$index = 1:nrow(data2)
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+
+data2 %>% head
+dim(data2)
+colnames(data2[colSums(is.na(data2))/nrow(data2) * 100 >= 50]) # 결측이 50% 이상 컬럼 확인
+
+
+colSums(is.na(data2))
+data2 %>% head
+data2 %>% tail
+
+colnames(data2)[ncol(data2)] = "avg_outtrn"
+
+data2 %>% head
+
+############
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #######################################################################
@@ -33,24 +86,12 @@ data.imputed %>% str
 dim(data.imputed)
 colSums(is.na(data.imputed))
 
-mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,-c(2:12)])
+data.imputed %>% head
+#mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,-c(2:12)])
+mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,-c(2:14)])
 summary(mod.lm)
 
 vif(mod.lm) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
-
-
-
-pred.lm = predict(mod.lm,test.imputed[,-c(2:12)])
-pred.lm = ifelse(pred.lm < 0, 0, pred.lm)
-
-out.lm = data.frame(id = id, 
-                     real = test$avg_outtrn, 
-                     pred = pred.lm)
-
-
-forecast::accuracy(out.lm$real, out.lm$pred+1)
-
-
 
 
 #######################################################################
@@ -72,6 +113,21 @@ y_train = train$avg_outtrn
 # 결측이 없이 모델을 돌려야할 경우 사용
 train.imputed = rfImpute(avg_outtrn ~ ., train[,-1])
 test.imputed = rfImpute(avg_outtrn ~ ., test[,-1])
+
+
+
+
+
+#pred.lm = predict(mod.lm,test.imputed[,-c(2:12)])
+pred.lm = predict(mod.lm,test.imputed[,-c(3:14)])
+pred.lm = ifelse(pred.lm < 0, 0, pred.lm)
+
+out.lm = data.frame(id = id, 
+                    real = test$avg_outtrn, 
+                    pred = pred.lm)
+
+
+forecast::accuracy(out.lm$real, out.lm$pred+1)
 
 
 
@@ -112,7 +168,11 @@ forecast::accuracy(out.rdf$real, out.rdf$pred)
 #######################################################################
 
 # GBM
-# Final Model fit
+trainSparse <- sparse.model.matrix(~. , data = train.imputed[,-c(1)])
+testSparse <- sparse.model.matrix(~. , data = test.imputed[,-c(1)])
+
+
+matrix(trainSparse)
 mod.gbm <- gbm.fit(x = as.matrix(trainSparse), y = y_train, n.trees = 50,
                    shrinkage = 0.1 ,interaction.depth = 3, n.minobsinnode = 10,
                    distribution = "gaussian",bag.fraction = 0.5)
@@ -136,9 +196,9 @@ forecast::accuracy(out.gbm$real, out.gbm$pred)
 
 
 
+#236
 trainSparse = xgb.DMatrix(data.matrix(train[,-c(1,length(train))]), label=y_train, missing=NA)
 testSparse  = xgb.DMatrix(data.matrix(test[,-c(1,length(test))]), missing = NA)
-#236
 
 foldsCV <- createFolds(y_train, k=20, list=TRUE, returnTrain=FALSE)
 
@@ -196,7 +256,7 @@ out.xgb = data.frame(id = id,
                      pred = pred.xgb)
 
 
-forecast::accuracy(out.xgb$real, out.xgb$pred)
+forecast::accuracy(out.xgb$real, out.xgb$pred+1)
 
 
 
@@ -273,7 +333,7 @@ forecast::accuracy(out.lgb$real, out.lgb$pred+1)
 train %>% dim
 y_train %>% length
 
-paramsvr <- list(gamma = 1e-4, cost = 1000, epsilon = 0.001)
+paramsvr <- list(gamma = 1e-4, cost = 100, epsilon = 0.001)
 
 
 trainSparse <- sparse.model.matrix(~. , data = train.imputed[,-c(1)])
@@ -324,12 +384,13 @@ out = do.call("cbind", list(out.lm,
                             out.svr))
 out = out[c(1,2,grep("pred",colnames(out)))]
 
-fwrite(out, "./out/pred_out.csv")
+#fwrite(out, "./out/pred_out_days.csv")
+fwrite(out, "./out/pred_out_weeks.csv")
 
 lm_eval = cbind(model_name = "Regression", forecast::accuracy(out.lm$real, out.lm$lm_pred+1))
 rdf_eval = cbind(model_name = "RF", forecast::accuracy(out.rdf$real, out.rdf$rdf_pred))
 gbm_eval = cbind(model_name = "GBM", forecast::accuracy(out.gbm$real, out.gbm$gbm_pred))
-xgb_eval = cbind(model_name = "XGB", forecast::accuracy(out.xgb$real, out.xgb$xgb_pred))
+xgb_eval = cbind(model_name = "XGB", forecast::accuracy(out.xgb$real, out.xgb$xgb_pred+1))
 lgb_eval = cbind(model_name = "LGB", forecast::accuracy(out.lgb$real, out.lgb$lgb_pred+1))
 svr_eval = cbind(model_name = "SVR", forecast::accuracy(out.svr$real, out.svr$svr_pred+1))
 
@@ -343,7 +404,9 @@ eval = do.call("rbind", list(lm_eval,
 eval = eval %>% as.data.frame()
 rownames(eval) = NULL
 eval = eval %>% arrange(RMSE)
+eval
 
-fwrite(eval, "./out/eval_out.csv")
+#fwrite(eval, "./out/eval_out_days.csv")
+fwrite(eval, "./out/eval_out_weeks.csv")
 
 
