@@ -5,6 +5,9 @@ library(tidyr)
 library(highcharter)
 library(quantmod)
 library(lubridate)
+library(corrplot)
+library(DataExplorer)
+
 
 library(car)
 library(caret)
