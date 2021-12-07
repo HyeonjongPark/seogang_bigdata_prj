@@ -22,7 +22,7 @@ source("./src/00_libs.R")
 #######################################################
 
 paprika = fread("./data/data_api/paprika.csv", encoding = "UTF-8") %>% as.data.frame() %>% arrange(measDtStr)
-
+paprika %>% dim
 # 데이터 수집 기간
 paprika %>% head # 2017-07-31 ~ 
 paprika %>% tail # 2018-11-27 
@@ -347,6 +347,7 @@ data$site_code = ifelse(data$frmhsId %in% c("WP18","WP25","WP26","WP27","WP28","
 data %>% str
 weatherfarm4 = fread("./data/weatherfarm/prep/weatherfarm4.csv")
 weatherfarm4 %>% str
+weatherfarm4 %>% colnames()
 data = left_join(data, weatherfarm4, by = c("year_week" = "year_week",
                                             "site_code" = "site_code"))
 
