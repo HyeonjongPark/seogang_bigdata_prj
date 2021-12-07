@@ -202,3 +202,173 @@ create_report(data, y = "avg_outtrn") # report2
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# weather 
+
+
+# temp
+weather4 %>% 
+  group_by(year_week) %>% 
+  summarise(avg_temp = mean(avg_temp, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year_week, y = avg_temp)) %>% 
+  hc_title(
+    text = paste0("<b>temp</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+# rain
+weather4 %>% 
+  group_by(year) %>% 
+  summarise(avg_rain = mean(avg_rain, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year, y = avg_rain)) %>% 
+  hc_title(
+    text = paste0("<b>rain</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+# wind
+weather4 %>% 
+  group_by(year_week) %>% 
+  summarise(avg_wind = mean(avg_wind, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year_week, y = avg_wind)) %>% 
+  hc_title(
+    text = paste0("<b>wind</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+
+weather4 %>% 
+  group_by(year) %>% 
+  summarise(avg_wind = mean(avg_wind, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year, y = avg_wind)) %>% 
+  hc_title(
+    text = paste0("<b>wind</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+
+# humi
+weather4 %>% 
+  group_by(year_week) %>% 
+  summarise(avg_humi = mean(avg_humi, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year_week, y = avg_humi)) %>% 
+  hc_title(
+    text = paste0("<b>humi</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+
+weather4 %>% 
+  group_by(year) %>% 
+  summarise(avg_humi = mean(avg_humi, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year, y = avg_humi)) %>% 
+  hc_title(
+    text = paste0("<b>humi</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+# dew_temp
+weather4 %>% 
+  group_by(year_week) %>% 
+  summarise(avg_dew_temp = mean(avg_dew_temp, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year_week, y = avg_dew_temp)) %>% 
+  hc_title(
+    text = paste0("<b>dew_temp</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+
+weather4 %>% 
+  group_by(year) %>% 
+  summarise(avg_dew_temp = mean(avg_dew_temp, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year, y = avg_dew_temp)) %>% 
+  hc_title(
+    text = paste0("<b>dew_temp</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+# avg_atmo_local_pres
+weather4 %>% 
+  group_by(year_week) %>% 
+  summarise(avg_atmo_local_pres = mean(avg_atmo_local_pres, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year_week, y = avg_atmo_local_pres)) %>% 
+  hc_title(
+    text = paste0("<b>atmo_local_pres</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+
+weather4 %>% 
+  group_by(year) %>% 
+  summarise(avg_atmo_local_pres = mean(avg_atmo_local_pres, na.rm = TRUE)) %>% 
+  hchart("spline", hcaes(x = year, y = avg_atmo_local_pres)) %>% 
+  hc_title(
+    text = paste0("<b>atmo_local_pres</b>"),
+    margin = 20,
+    align = "left",
+    style = list(color = "#22A884", useHTML = TRUE)
+  ) %>% 
+  hc_add_theme(hc_theme_darkunica())
+
+
+
+
+#avg_humi avg_dew_temp avg_atmo_local_pres
+#avg_atmo_sealevel_pres avg_temp_5cm avg_temp_10cm avg_temp_20cm avg_temp_30cm
+
+
+
+
+
+
+
+
+

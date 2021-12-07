@@ -105,54 +105,7 @@ data2 %>% head
 #############
 ## 주 단위 + dacon data + lag,lead ver3
 
-data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
-
-data$year_week = NULL
-# 더미 변수를 이용해 원 핫 인코딩
-dmy <- dummyVars(~., data = data)
-data2 <- data.frame(predict(dmy, newdata = data))
-
-data2 %>% head
-data2$avg_price_lead1 = lead(data2$avg_price, 1) 
-data2$avg_price_lead2 = lead(data2$avg_price, 2) 
-data2$avg_price_lead3 = lead(data2$avg_price, 3) 
-data2$avg_price_lead1 = lag(data2$avg_price, 1) 
-data2$avg_price_lead2 = lag(data2$avg_price, 2) 
-data2$avg_price_lead3 = lag(data2$avg_price, 3) 
-
-data2$avg_volume_lead1 = lead(data2$avg_volume, 1) 
-data2$avg_volume_lead2 = lead(data2$avg_volume, 2) 
-data2$avg_volume_lead3 = lead(data2$avg_volume, 3) 
-data2$avg_volume_lead1 = lag(data2$avg_volume, 1) 
-data2$avg_volume_lead2 = lag(data2$avg_volume, 2) 
-data2$avg_volume_lead3 = lag(data2$avg_volume, 3) 
-
-data2 = data2[-c(1:3),]
-
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-
-data2$index = 1:nrow(data2)
-data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
-
-data2 %>% head
-dim(data2)
-colnames(data2[colSums(is.na(data2))/nrow(data2) * 100 >= 50]) # 결측이 50% 이상 컬럼 확인
-
-
-colSums(is.na(data2))
-data2 %>% head
-data2 %>% tail
-
-colnames(data2)[ncol(data2)] = "avg_outtrn"
-
-data2 %>% head
+data2 = fread("./data/data_api/prep/paprika_prep_weeks3.csv")
 
 
 
@@ -160,7 +113,12 @@ data2 %>% head
 
 
 
+#############
+## 주 단위 + dacon data + lag,lead + 농업기후 ver4
 
+data2 = fread("./data/data_api/prep/paprika_prep_weeks4.csv")
+
+############
 
 
 
@@ -183,9 +141,11 @@ data.imputed %>% str
 dim(data.imputed)
 colSums(is.na(data.imputed))
 
-data.imputed %>% head
+data.imputed = data.imputed[c(2:ncol(data.imputed),1)]
+
+
 #mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,-c(2:12)])
-mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,-c(2:14)])
+mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,c(1:ncol(data.imputed))] )
 summary(mod.lm)
 
 vif(mod.lm) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
@@ -202,21 +162,26 @@ idx = sample(1:nrow(data2), size = round(proportion * nrow(data2)))
 train = data2[idx, ]
 test = data2[-idx, ]
 
+
 id = test$index
 
 y_train = train$avg_outtrn
-
+train$avg_outtrn = NULL
+train$avg_outtrn = y_train
 
 # 결측이 없이 모델을 돌려야할 경우 사용
 train.imputed = rfImpute(avg_outtrn ~ ., train[,-1])
 test.imputed = rfImpute(avg_outtrn ~ ., test[,-1])
+
+train.imputed = train.imputed[c(2:ncol(train.imputed),1)]
+test.imputed = test.imputed[c(2:ncol(test.imputed),1)]
 
 
 
 
 
 #pred.lm = predict(mod.lm,test.imputed[,-c(2:12)])
-pred.lm = predict(mod.lm,test.imputed[,-c(3:14)])
+pred.lm = predict(mod.lm,test.imputed[,-ncol(test.imputed)])
 pred.lm = ifelse(pred.lm < 0, 0, pred.lm)
 
 out.lm = data.frame(id = id, 
@@ -246,10 +211,11 @@ forecast::accuracy(out.lm$real, out.lm$pred+1)
 
 set.seed(123)
 
+
 mod.rdf = randomForest(avg_outtrn ~ ., data = train.imputed, 
                        ntree=300,importance=T)
 
-pred.rdf = predict(mod.rdf,test.imputed[,-1])
+pred.rdf = predict(mod.rdf,test.imputed)
 pred.rdf = ifelse(pred.rdf < 0, 0, pred.rdf)
 
 out.rdf = data.frame(id = id, 
@@ -265,11 +231,10 @@ forecast::accuracy(out.rdf$real, out.rdf$pred)
 #######################################################################
 
 # GBM
-trainSparse <- sparse.model.matrix(~. , data = train.imputed[,-c(1)])
-testSparse <- sparse.model.matrix(~. , data = test.imputed[,-c(1)])
+trainSparse <- sparse.model.matrix(~. , data = train.imputed[,-ncol(train.imputed)])
+testSparse <- sparse.model.matrix(~. , data = test.imputed)
 
 
-matrix(trainSparse)
 mod.gbm <- gbm.fit(x = as.matrix(trainSparse), y = y_train, n.trees = 50,
                    shrinkage = 0.1 ,interaction.depth = 3, n.minobsinnode = 10,
                    distribution = "gaussian",bag.fraction = 0.5)
@@ -294,6 +259,9 @@ forecast::accuracy(out.gbm$real, out.gbm$pred)
 
 
 #236
+train = as.data.frame(train)
+test = as.data.frame(test)
+
 trainSparse = xgb.DMatrix(data.matrix(train[,-c(1,length(train))]), label=y_train, missing=NA)
 testSparse  = xgb.DMatrix(data.matrix(test[,-c(1,length(test))]), missing = NA)
 
