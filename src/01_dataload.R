@@ -228,3 +228,52 @@ weatherfarm4$site = NULL
 fwrite(weatherfarm4, "./data/weatherfarm/prep/weatherfarm4.csv")
 
 
+
+
+
+
+
+###########################################
+#### farmNew
+###########################################
+
+getwd()
+library(readxl)
+guansu$id %>% unique
+guansu = read_excel("./data/farmNew/관수_주차.xlsx")
+ilsa = read_excel("./data/farmNew/누적일사량_주차.xlsx")
+saengyuk = read_excel("./data/farmNew/생육_주차.xlsx")
+environ = read_excel("./data/farmNew/환경_주차.xlsx")
+
+farmNew = merge(guansu, ilsa)
+farmNew = merge(farmNew, saengyuk)
+farmNew = merge(farmNew, environ)
+
+farmNew = farmNew %>% 
+  mutate(year_week = paste(year, week, sep = "_")) %>% 
+  arrange(year_week)
+
+farmNew$id = NULL
+farmNew$year = NULL
+farmNew$week = NULL
+farmNew %>% as.data.frame() %>% head
+
+farmNew2 = farmNew %>% group_by(year_week) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE))) 
+farmNew2 = farmNew2 %>% as.data.frame()
+
+# inf, nan -> NA
+for(colname in colnames(farmNew2)) {
+  try({
+    farmNew2[is.infinite(farmNew2[,colname]),][,colname] = NA
+  })
+  try({
+    farmNew2[is.nan(farmNew2[,colname]),][,colname] = NA
+  })
+}
+
+
+
+fwrite(farmNew2, "./data/data_api/prep/farmNew.csv")
+
+

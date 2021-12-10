@@ -399,3 +399,125 @@ data2 %>% tail
 
 fwrite(data2, "./data/data_api/prep/paprika_prep_weeks4.csv", bom = TRUE)
 
+
+
+
+
+########################
+### dacon data 결합 + farmNew  #### ver5
+########################
+
+data = fread("./data/data_api/prep/paprika_prep_weeks2.csv") %>% as.data.frame()
+farmNew2 = fread("./data/data_api/prep/farmNew.csv")
+
+data %>% arrange(year_week) %>% head
+farmNew2 %>% head
+
+data %>% arrange(year_week) %>% tail
+farmNew2 %>% tail
+
+
+data2 = left_join(data, farmNew2)
+
+data2$frmhsId = NULL
+
+y_value = data2$avg_outtrn
+data2$avg_outtrn = NULL
+
+data2$index = 1:nrow(data2)
+data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+data2$avg_outtrn = y_value
+
+
+
+fwrite(data2, "./data/data_api/prep/paprika_prep_weeks5.csv", bom = TRUE)
+
+
+
+
+
+
+########################
+### dacon data 결합 + lead, lag  + 농업 기후데이터 + farmNew  #### ver6
+########################
+farmNew2 = fread("./data/data_api/prep/farmNew.csv")
+
+
+data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
+data$site_code = NA
+data$site_code = ifelse(data$frmhsId %in% c("WP18","WP25","WP26","WP27","WP28","WP29","WP30","WP33","WP36"),  702, 970)
+
+data %>% str
+weatherfarm4 = fread("./data/weatherfarm/prep/weatherfarm4.csv")
+weatherfarm4 %>% str
+weatherfarm4 %>% colnames()
+data = left_join(data, weatherfarm4, by = c("year_week" = "year_week",
+                                            "site_code" = "site_code"))
+
+colSums(is.na(data))
+
+
+farmNew2 = as.data.frame(farmNew2)
+
+data2 = left_join(data, farmNew2)
+
+data2$frmhsId = NULL
+
+y_value = data2$avg_outtrn
+data2$avg_outtrn = NULL
+
+data2$index = 1:nrow(data2)
+data2$avg_outtrn = y_value
+data2 %>% head
+
+
+
+
+data2$year_week = NULL
+data2$site_code = NULL
+data2$frmhsId = NULL
+data2 %>% head
+
+
+# 더미 변수를 이용해 원 핫 인코딩 - > 제외
+# dmy <- dummyVars(~., data = data)
+# data2 <- data.frame(predict(dmy, newdata = data))
+data2 %>% head
+data2$avg_price_lead1 = lead(data2$avg_price, 1) 
+data2$avg_price_lead2 = lead(data2$avg_price, 2) 
+data2$avg_price_lead3 = lead(data2$avg_price, 3) 
+data2$avg_price_lag1 = lag(data2$avg_price, 1) 
+data2$avg_price_lag2 = lag(data2$avg_price, 2) 
+data2$avg_price_lag3 = lag(data2$avg_price, 3) 
+
+data2$avg_volume_lead1 = lead(data2$avg_volume, 1) 
+data2$avg_volume_lead2 = lead(data2$avg_volume, 2) 
+data2$avg_volume_lead3 = lead(data2$avg_volume, 3) 
+data2$avg_volume_lag1 = lag(data2$avg_volume, 1) 
+data2$avg_volume_lag2 = lag(data2$avg_volume, 2) 
+data2$avg_volume_lag3 = lag(data2$avg_volume, 3) 
+
+data2 = data2[-c(1:3),]
+
+
+
+
+
+
+
+y_value = data2$avg_outtrn
+data2$avg_outtrn = NULL
+
+data2$index = 1:nrow(data2)
+data2$avg_outtrn = y_value
+
+data2 %>% head
+dim(data2)
+colnames(data2[colSums(is.na(data2))/nrow(data2) * 100 >= 50]) # 결측이 50% 이상 컬럼 확인
+
+
+colSums(is.na(data2))
+data2 %>% head
+data2 %>% tail
+fwrite(data2, "./data/data_api/prep/paprika_prep_weeks6.csv", bom = TRUE)
+

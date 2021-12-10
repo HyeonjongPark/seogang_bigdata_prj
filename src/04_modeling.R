@@ -1,4 +1,4 @@
-
+rm(list = ls())
 source("./src/00_libs.R")
 
 #############
@@ -92,7 +92,6 @@ colSums(is.na(data2))
 data2 %>% head
 data2 %>% tail
 
-colnames(data2)[ncol(data2)] = "avg_outtrn"
 
 data2 %>% head
 
@@ -105,7 +104,14 @@ data2 %>% head
 #############
 ## 주 단위 + dacon data + lag,lead ver3
 
-data2 = fread("./data/data_api/prep/paprika_prep_weeks3.csv")
+data2 = fread("./data/data_api/prep/paprika_prep_weeks3.csv") %>% as.data.frame()
+
+# y_value = data2$avg_outtrn
+# data2$avg_outtrn = NULL
+# 
+# data2$index = 1:nrow(data2)
+# data2 = data2[,c(ncol(data2),1:(ncol(data2)-1))]
+# data2$avg_outtrn = y_value
 
 
 
@@ -121,7 +127,20 @@ data2 = fread("./data/data_api/prep/paprika_prep_weeks4.csv")
 ############
 
 
+#############
+## 주 단위 + dacon data + farmNew ver5
 
+data2 = fread("./data/data_api/prep/paprika_prep_weeks5.csv") %>% as.data.frame()
+
+############
+
+
+#############
+## 주 단위 + dacon data + lag,lead + 농업기후 + farmNew ver6
+
+data2 = fread("./data/data_api/prep/paprika_prep_weeks6.csv") %>% as.data.frame()
+
+############
 
 
 
@@ -168,6 +187,13 @@ id = test$index
 y_train = train$avg_outtrn
 train$avg_outtrn = NULL
 train$avg_outtrn = y_train
+
+y_test = test$avg_outtrn
+test$avg_outtrn = NULL
+test$avg_outtrn = y_test
+
+
+
 
 # 결측이 없이 모델을 돌려야할 경우 사용
 train.imputed = rfImpute(avg_outtrn ~ ., train[,-1])
@@ -310,7 +336,6 @@ mod.xgb = xgboost(data = trainSparse,
 # 변수 중요도
 xgb_imp = xgb.importance(model = mod.xgb)
 xgb.plot.importance(xgb_imp, top_n = 20)
-
 
 
 pred.xgb = predict(mod.xgb,testSparse)
