@@ -45,7 +45,7 @@ for(i in 1:length(urllist)){
 
 total2 <- rbindlist(total)
 
-fwrite(total2, "./data/data_api/envdatarqst_strawberry.csv")
+fwrite(total2, "./data/raw/openapi/envdatarqst_strawberry.csv")
 
 
 
@@ -54,7 +54,7 @@ fwrite(total2, "./data/data_api/envdatarqst_strawberry.csv")
 
 ## dacon data - 노지 데이터 가격, 거래량
 
-dacon_data = fread("./data/datazip/public_data/train.csv", encoding = "UTF-8") %>% as.data.frame()
+dacon_data = fread("./data/raw/dacon/train.csv", encoding = "UTF-8") %>% as.data.frame()
 dacon_data$date = ymd(dacon_data$date)
 dacon_data %>% colnames
 dacon_data = dacon_data[,c(1,2,27,28)]
@@ -83,7 +83,7 @@ dacon_data4 = dacon_data3 %>%
   arrange(year_week)
 
 
-fwrite(dacon_data4, "./data/data_api/prep/dacon_prep.csv")
+fwrite(dacon_data4, "./data/prep/dacon_prep.csv")
 
 
 
@@ -225,7 +225,7 @@ weatherfarm4 = weatherfarm3 %>% filter(site %in% c("철원장흥", "익산"))
 weatherfarm4 %>% tail
 weatherfarm4$site = NULL
 
-fwrite(weatherfarm4, "./data/weatherfarm/prep/weatherfarm4.csv")
+fwrite(weatherfarm4, "./data/prep/weatherfarm4.csv")
 
 
 
@@ -240,10 +240,10 @@ fwrite(weatherfarm4, "./data/weatherfarm/prep/weatherfarm4.csv")
 getwd()
 library(readxl)
 guansu$id %>% unique
-guansu = read_excel("./data/farmNew/관수_주차.xlsx")
-ilsa = read_excel("./data/farmNew/누적일사량_주차.xlsx")
-saengyuk = read_excel("./data/farmNew/생육_주차.xlsx")
-environ = read_excel("./data/farmNew/환경_주차.xlsx")
+guansu = read_excel("./data/raw/farmNew/관수_주차.xlsx")
+ilsa = read_excel("./data/raw/farmNew/누적일사량_주차.xlsx")
+saengyuk = read_excel("./data//rawfarmNew/생육_주차.xlsx")
+environ = read_excel("./data/raw/farmNew/환경_주차.xlsx")
 
 farmNew = merge(guansu, ilsa)
 farmNew = merge(farmNew, saengyuk)
@@ -274,6 +274,6 @@ for(colname in colnames(farmNew2)) {
 
 
 
-fwrite(farmNew2, "./data/data_api/prep/farmNew.csv")
+fwrite(farmNew2, "./data/prep/farmNew.csv")
 
 

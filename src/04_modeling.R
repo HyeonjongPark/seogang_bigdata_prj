@@ -4,7 +4,7 @@ source("./src/00_libs.R")
 #############
 ## 일 단위 ##
 
-data = fread("./data/data_api/prep/paprika_prep_days.csv") %>% as.data.frame()
+data = fread("./data/prep/paprika_prep_days.csv") %>% as.data.frame()
 data %>% head
 data$frmDate = NULL
 
@@ -32,7 +32,7 @@ colSums(is.na(data2))
 #############
 ## 주 단위 ## ver1
 
-data = fread("./data/data_api/prep/paprika_prep_weeks.csv") %>% as.data.frame()
+data = fread("./data/prep/paprika_prep_weeks.csv") %>% as.data.frame()
 data$year_week = NULL
 # 더미 변수를 이용해 원 핫 인코딩
 dmy <- dummyVars(~., data = data)
@@ -67,7 +67,7 @@ data2 %>% head
 #############
 ## 주 단위 + dacon data ver2
 
-data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
+data = fread("./data/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
 
 data$year_week = NULL
 # 더미 변수를 이용해 원 핫 인코딩
@@ -104,7 +104,7 @@ data2 %>% head
 #############
 ## 주 단위 + dacon data + lag,lead ver3
 
-data2 = fread("./data/data_api/prep/paprika_prep_weeks3.csv") %>% as.data.frame()
+data2 = fread("./data/prep/paprika_prep_weeks3.csv") %>% as.data.frame()
 
 # y_value = data2$avg_outtrn
 # data2$avg_outtrn = NULL
@@ -122,7 +122,7 @@ data2 = fread("./data/data_api/prep/paprika_prep_weeks3.csv") %>% as.data.frame(
 #############
 ## 주 단위 + dacon data + lag,lead + 농업기후 ver4
 
-data2 = fread("./data/data_api/prep/paprika_prep_weeks4.csv")
+data2 = fread("./data/prep/paprika_prep_weeks4.csv")
 
 ############
 
@@ -130,7 +130,7 @@ data2 = fread("./data/data_api/prep/paprika_prep_weeks4.csv")
 #############
 ## 주 단위 + dacon data + farmNew ver5
 
-data2 = fread("./data/data_api/prep/paprika_prep_weeks5.csv") %>% as.data.frame()
+data2 = fread("./data/prep/paprika_prep_weeks5.csv") %>% as.data.frame()
 
 ############
 
@@ -138,7 +138,7 @@ data2 = fread("./data/data_api/prep/paprika_prep_weeks5.csv") %>% as.data.frame(
 #############
 ## 주 단위 + dacon data + lag,lead + 농업기후 + farmNew ver6
 
-data2 = fread("./data/data_api/prep/paprika_prep_weeks6.csv") %>% as.data.frame()
+data2 = fread("./data/prep/paprika_prep_weeks6.csv") %>% as.data.frame()
 
 ############
 

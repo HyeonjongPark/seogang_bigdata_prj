@@ -18,3 +18,8 @@ library(xgboost)
 library(lightgbm)
 library(e1071)
 library(Matrix)
+
+library(DBI)
+library(RMariaDB)
+
+pwd = read.table("../db_password.txt", header = T)

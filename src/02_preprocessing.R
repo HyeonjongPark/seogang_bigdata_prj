@@ -1,4 +1,4 @@
-
+rm(list = ls())
 # frmhsId : 농가코드
 # measDtStr : 측정일시
 # inTp :내부온도
@@ -21,7 +21,7 @@ source("./src/00_libs.R")
 ########### 일 단위 처리
 #######################################################
 
-paprika = fread("./data/data_api/paprika.csv", encoding = "UTF-8") %>% as.data.frame() %>% arrange(measDtStr)
+paprika = fread("./data/raw/openapi/paprika.csv", encoding = "UTF-8") %>% as.data.frame() %>% arrange(measDtStr)
 paprika %>% dim
 # 데이터 수집 기간
 paprika %>% head # 2017-07-31 ~ 
@@ -117,7 +117,7 @@ for(colname in colnames(paprika2)) {
 }
 
 
-fwrite(paprika2, "./data/data_api/prep/paprika_prep_days.csv", bom = TRUE)
+fwrite(paprika2, "./data/prep/paprika_prep_days.csv", bom = TRUE)
 
 
 
@@ -137,7 +137,7 @@ fwrite(paprika2, "./data/data_api/prep/paprika_prep_days.csv", bom = TRUE)
 ########### 주 단위 처리 ver1
 #######################################################
 
-paprika = fread("./data/data_api/paprika.csv", encoding = "UTF-8") %>% as.data.frame() %>% arrange(measDtStr)
+paprika = fread("./data/raw/openapi/paprika.csv", encoding = "UTF-8") %>% as.data.frame() %>% arrange(measDtStr)
 
 # 데이터 수집 기간
 paprika %>% head # 2017-07-31 ~ 
@@ -252,10 +252,12 @@ paprika3 = paprika3[,c(ncol(paprika3),1:(ncol(paprika3)-1))]
 
 paprika3 %>% head
 
+fwrite(paprika3, "./data/prep/paprika_prep_weeks1.csv")
 
-fwrite(paprika3, "./data/data_api/prep/paprika_prep_weeks.csv", bom = TRUE)
-paprika3 %>% dim
 
+con <- dbConnect(RMariaDB::MariaDB(), username="root", password = as.character(pwd[1,]), dbname ="sinto", host="localhost")
+dbWriteTable(con, "paprika_prep_weeks1", paprika3, overwrite = TRUE, fileEncoding="UTF-8") # db 내에 데이터 넣기
+dbDisconnect(con)
 
 
 
@@ -271,11 +273,16 @@ paprika3 %>% dim
 ### dacon data 결합 #### ver2
 ########################
 
-dacon_data4 = fread("./data/data_api/prep/dacon_prep.csv")
+dacon_data4 = fread("./data/prep/dacon_prep.csv")
 
 paprika4 = left_join(paprika3, dacon_data4)
 
-fwrite(paprika4, "./data/data_api/prep/paprika_prep_weeks2.csv", bom = TRUE)
+fwrite(paprika4, "./data/prep/paprika_prep_weeks2.csv", bom = TRUE)
+
+con <- dbConnect(RMariaDB::MariaDB(), username="root", password = as.character(pwd[1,]), dbname ="sinto", host="localhost")
+dbWriteTable(con, "paprika_prep_weeks2", paprika4, overwrite = TRUE, fileEncoding="UTF-8") # db 내에 데이터 넣기
+dbDisconnect(con)
+
 
 
 
@@ -285,7 +292,7 @@ fwrite(paprika4, "./data/data_api/prep/paprika_prep_weeks2.csv", bom = TRUE)
 ########################
 
 
-data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
+data = fread("./data/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
 
 data$year_week = NULL
 # 더미 변수를 이용해 원 핫 인코딩
@@ -330,8 +337,12 @@ colSums(is.na(data2))
 data2 %>% head
 data2 %>% tail
 
-fwrite(data2, "./data/data_api/prep/paprika_prep_weeks3.csv", bom = TRUE)
+fwrite(data2, "./data/prep/paprika_prep_weeks3.csv", bom = TRUE)
 
+
+con <- dbConnect(RMariaDB::MariaDB(), username="root", password = as.character(pwd[1,]), dbname ="sinto", host="localhost")
+dbWriteTable(con, "paprika_prep_weeks3", data2, overwrite = TRUE, fileEncoding="UTF-8") # db 내에 데이터 넣기
+dbDisconnect(con)
 
 
 
@@ -340,12 +351,12 @@ fwrite(data2, "./data/data_api/prep/paprika_prep_weeks3.csv", bom = TRUE)
 ### dacon data 결합 + lead, lag  + 농업 기후데이터  #### ver4
 ########################
 
-data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
+data = fread("./data/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
 data$site_code = NA
 data$site_code = ifelse(data$frmhsId %in% c("WP18","WP25","WP26","WP27","WP28","WP29","WP30","WP33","WP36"),  702, 970)
 
 data %>% str
-weatherfarm4 = fread("./data/weatherfarm/prep/weatherfarm4.csv")
+weatherfarm4 = fread("./data/prep/weatherfarm4.csv")
 weatherfarm4 %>% str
 weatherfarm4 %>% colnames()
 data = left_join(data, weatherfarm4, by = c("year_week" = "year_week",
@@ -397,7 +408,11 @@ colSums(is.na(data2))
 data2 %>% head
 data2 %>% tail
 
-fwrite(data2, "./data/data_api/prep/paprika_prep_weeks4.csv", bom = TRUE)
+fwrite(data2, "./data/prep/paprika_prep_weeks4.csv", bom = TRUE)
+
+con <- dbConnect(RMariaDB::MariaDB(), username="root", password = as.character(pwd[1,]), dbname ="sinto", host="localhost")
+dbWriteTable(con, "paprika_prep_weeks4", data2, overwrite = TRUE, fileEncoding="UTF-8") # db 내에 데이터 넣기
+dbDisconnect(con)
 
 
 
@@ -407,8 +422,8 @@ fwrite(data2, "./data/data_api/prep/paprika_prep_weeks4.csv", bom = TRUE)
 ### dacon data 결합 + farmNew  #### ver5
 ########################
 
-data = fread("./data/data_api/prep/paprika_prep_weeks2.csv") %>% as.data.frame()
-farmNew2 = fread("./data/data_api/prep/farmNew.csv")
+data = fread("./data/prep/paprika_prep_weeks2.csv") %>% as.data.frame()
+farmNew2 = fread("./data/prep/farmNew.csv")
 
 data %>% arrange(year_week) %>% head
 farmNew2 %>% head
@@ -430,7 +445,11 @@ data2$avg_outtrn = y_value
 
 
 
-fwrite(data2, "./data/data_api/prep/paprika_prep_weeks5.csv", bom = TRUE)
+fwrite(data2, "./data/prep/paprika_prep_weeks5.csv", bom = TRUE)
+
+con <- dbConnect(RMariaDB::MariaDB(), username="root", password = as.character(pwd[1,]), dbname ="sinto", host="localhost")
+dbWriteTable(con, "paprika_prep_weeks5", data2, overwrite = TRUE, fileEncoding="UTF-8") # db 내에 데이터 넣기
+dbDisconnect(con)
 
 
 
@@ -440,15 +459,15 @@ fwrite(data2, "./data/data_api/prep/paprika_prep_weeks5.csv", bom = TRUE)
 ########################
 ### dacon data 결합 + lead, lag  + 농업 기후데이터 + farmNew  #### ver6
 ########################
-farmNew2 = fread("./data/data_api/prep/farmNew.csv")
+farmNew2 = fread("./data/prep/farmNew.csv")
 
 
-data = fread("./data/data_api/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
+data = fread("./data/prep/paprika_prep_weeks2.csv")%>% as.data.frame()
 data$site_code = NA
 data$site_code = ifelse(data$frmhsId %in% c("WP18","WP25","WP26","WP27","WP28","WP29","WP30","WP33","WP36"),  702, 970)
 
 data %>% str
-weatherfarm4 = fread("./data/weatherfarm/prep/weatherfarm4.csv")
+weatherfarm4 = fread("./data/prep/weatherfarm4.csv")
 weatherfarm4 %>% str
 weatherfarm4 %>% colnames()
 data = left_join(data, weatherfarm4, by = c("year_week" = "year_week",
@@ -519,5 +538,10 @@ colnames(data2[colSums(is.na(data2))/nrow(data2) * 100 >= 50]) # 결측이 50% �
 colSums(is.na(data2))
 data2 %>% head
 data2 %>% tail
-fwrite(data2, "./data/data_api/prep/paprika_prep_weeks6.csv", bom = TRUE)
+fwrite(data2, "./data/prep/paprika_prep_weeks6.csv", bom = TRUE)
+
+con <- dbConnect(RMariaDB::MariaDB(), username="root", password = as.character(pwd[1,]), dbname ="sinto", host="localhost")
+dbWriteTable(con, "paprika_prep_weeks6", data2, overwrite = TRUE, fileEncoding="UTF-8") # db 내에 데이터 넣기
+dbDisconnect(con)
+
 
