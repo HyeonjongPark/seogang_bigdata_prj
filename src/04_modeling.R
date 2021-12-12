@@ -142,6 +142,16 @@ data2 = fread("./data/prep/paprika_prep_weeks6.csv") %>% as.data.frame()
 
 ############
 
+#############
+## 주 단위 + smartfarm 홈페이지 + farmNew ver7
+
+data2 = fread("./data/prep/train_new.csv") %>% as.data.frame()
+colSums(is.na(data2))
+colnames(data2)[1] = "index"
+colnames(data2)[ncol(data2)] = "avg_outtrn"
+
+############
+
 
 
 
@@ -153,21 +163,54 @@ data2 = fread("./data/prep/paprika_prep_weeks6.csv") %>% as.data.frame()
 
 # y : avg_outtrn  
 
-# 결측 보정
-data.imputed = rfImpute(avg_outtrn ~ ., data2[,-1])
-data.imputed %>% str
+# # 결측 보정
+# data.imputed = rfImpute(avg_outtrn ~ ., data2[,-1])
+# data.imputed %>% str
+# 
+# dim(data.imputed)
+# colSums(is.na(data.imputed))
+# 
+# data.imputed = data.imputed[c(2:ncol(data.imputed),1)]
+# 
+# 
+# #mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,-c(2:12)])
+# mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,c(1:ncol(data.imputed))] )
+# mod.lm = lm(target ~ ., data = data2[,-1])
+# data2 %>% head
+# summary(mod.lm)
+# 
+# vif(mod.lm) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
 
-dim(data.imputed)
-colSums(is.na(data.imputed))
+data2 
+mod.lm1 = lm(avg_outtrn ~., data = data2[,-1])
+summary(mod.lm1)
 
-data.imputed = data.imputed[c(2:ncol(data.imputed),1)]
+mod.lm2 = step(mod.lm1, direction = "both")
+summary(mod.lm2)
+
+data2 = data2[,c("index", "growth", "length", "new_f_height", "n_group", "f_group", "n_fruit", "TP_daytime1", "TP_daytime2", "TP_am", "TP_pm", "TP_sunset", "TP_evening", "TP_night", "HD_all", "HD_daytime1", "HD_pm", "HD_evening", "HD_dawn", "co2_all", "co2_daytime1", "co2_daytime2", "co2_sunset", "co2_evening", "co2_night", "co2_dawn", "sol", "d_g_ph", "p_water", "volume_sum", "avg_outtrn")]
+
+#data2 = data2[,c('index', 'growth' , 'length' , 'new_f_height' , 'n_group' , 'f_group' , 'n_fruit' , 'TP_daytime1' , 'TP_daytime2' , 'TP_am' , 'TP_pm' , 'TP_sunset' , 'TP_evening' , 'TP_night' , 'HD_all' , 'HD_daytime1' , 'HD_pm' , 'HD_evening' , 'HD_dawn' , 'co2_all' , 'co2_daytime1' , 'co2_daytime2' , 'co2_sunset' , 'co2_evening' , 'co2_night' , 'co2_dawn' , 'sol' , 'd_g_ph' , 'p_water' ,'volume_sum', 'avg_outtrn')]
 
 
-#mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,-c(2:12)])
-mod.lm = lm(avg_outtrn ~ ., data = data.imputed[,c(1:ncol(data.imputed))] )
-summary(mod.lm)
+mod.lm3 = lm(target ~ ., data = data3 )
+summary(mod.lm3)
 
-vif(mod.lm) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
+vif(mod.lm3) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
+
+select_col = vif(mod.lm3)<10
+data4 = data3[,select_col]
+data4 %>% colnames()
+
+mod.lm4 = lm(target ~ ., data = data4 )
+summary(mod.lm4)
+
+
+#"width", "fr_group", "h_group", "co2_dawn", "sol", "d_g_ph", "p_water", "p_water_day", "volume_sum", "price_mean", "price_std"
+
+step(data2, "both")
+
+
 
 
 #######################################################################

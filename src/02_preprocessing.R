@@ -545,3 +545,12 @@ dbWriteTable(con, "paprika_prep_weeks6", data2, overwrite = TRUE, fileEncoding="
 dbDisconnect(con)
 
 
+
+
+
+
+
+getwd()
+train = fread("./data/prep/train_new.csv") %>% as.data.frame()
+train %>% head
+
