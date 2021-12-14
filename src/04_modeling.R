@@ -149,11 +149,15 @@ data2 = fread("./data/prep/paprika_prep_weeks6.csv") %>% as.data.frame()
 ## 주 단위 + smartfarm 홈페이지 + farmNew ver7
 
 data2 = fread("./data/prep/train_new2.csv") %>% as.data.frame()
+data2 %>% head
 colSums(is.na(data2))
+
 data2$id = as.character(data2$id)
 data2 %>% str
-dmy <- dummyVars(~., data = data2)
-data2 <- data.frame(predict(dmy, newdata = data2))
+
+## 더미 변수화
+# dmy <- dummyVars(~., data = data2)
+# data2 <- data.frame(predict(dmy, newdata = data2))
 
 data2$index = 1:nrow(data2)
 
@@ -166,7 +170,7 @@ data2$index = NULL
 
 data2 = cbind(index, data2, avg_outtrn)
 
-
+data2$id = NULL
 
 ############
 
@@ -203,9 +207,26 @@ data2 = cbind(index, data2, avg_outtrn)
 mod.lm1 = lm(avg_outtrn ~., data = data2[,-1])
 summary(mod.lm1)
 data2 %>% dim # 60개
+
 # 변수 선택법
 mod.lm2 = step(mod.lm1, direction = "both")
 summary(mod.lm2)
+
+
+
+# 결측이 있는 경우 보정후 변수 선택법
+data2 = rfImpute(avg_outtrn ~ ., data2[,-1])
+data2 = data2[c(2:ncol(data2),1)]
+
+
+data2 = na.omit(data2)
+
+mod.lm1 = lm(avg_outtrn ~., data = data2[,-1])
+mod.lm2 = step(mod.lm1, direction = "both")
+summary(mod.lm2)
+
+
+
 
 # 선택된 변수들
 data2 = data2[,c("index", "id21", "id27", "id28", "id29", "id31", "id32", "id37", "id41", "id43", "width", "new_f_height", "n_group", "f_group", "fr_group", "h_group", "n_fruit", "tp_all", "TP_daytime1", "TP_daytime2", "TP_am", "TP_pm", "TP_sunset", "TP_evening", "TP_night", "HD_all", "HD_daytime1", "HD_daytime2", "HD_am", "HD_pm", "HD_sunset", "HD_dawn", "co2_daytime1", "co2_am", "co2_pm", "co2_evening", "co2_night", "co2_dawn", "sol", "p_water", "price_mean", "countDate", "avg_outtrn")]
@@ -222,7 +243,6 @@ mod.lm4 = step(mod.lm3, direction = "both")
 summary(mod.lm4)
 
 data2 = data2[,c("index", "id21", "id27", "id28", "id29", "id31", "id32", "id37", "id41", "id43", "width", "new_f_height", "n_group", "h_group", "HD_pm", "HD_dawn", "co2_pm", "co2_dawn", "p_water", "price_mean", "countDate", "avg_outtrn")]
-
 
 
 # 
@@ -268,27 +288,32 @@ test$avg_outtrn = y_test
 
 
 
+
+
+
+
+
 # # 결측이 없이 모델을 돌려야할 경우 사용
-# train.imputed = rfImpute(avg_outtrn ~ ., train[,-1])
-# test.imputed = rfImpute(avg_outtrn ~ ., test[,-1])
-# 
-# train.imputed = train.imputed[c(2:ncol(train.imputed),1)]
-# test.imputed = test.imputed[c(2:ncol(test.imputed),1)]
-# 
-# 
-# 
-# 
-# 
-# #pred.lm = predict(mod.lm,test.imputed[,-c(2:12)])
-# pred.lm = predict(mod.lm,test.imputed[,-ncol(test.imputed)])
-# pred.lm = ifelse(pred.lm < 0, 0, pred.lm)
-# 
-# out.lm = data.frame(id = id, 
-#                     real = test$avg_outtrn, 
-#                     pred = pred.lm)
-# 
-# 
-# forecast::accuracy(out.lm$real, out.lm$pred+1)
+train.imputed = rfImpute(avg_outtrn ~ ., train[,-1])
+test.imputed = rfImpute(avg_outtrn ~ ., test[,-1])
+
+train.imputed = train.imputed[c(2:ncol(train.imputed),1)]
+test.imputed = test.imputed[c(2:ncol(test.imputed),1)]
+
+
+
+
+
+
+pred.lm = predict(mod.lm1,test.imputed[,-ncol(test.imputed)])
+pred.lm = ifelse(pred.lm < 0, 0, pred.lm)
+
+out.lm = data.frame(id = id,
+                    real = test$avg_outtrn,
+                    pred = pred.lm)
+
+
+forecast::accuracy(out.lm$real, out.lm$pred+1)
 
 
 
@@ -354,7 +379,6 @@ forecast::accuracy(out.gbm$real, out.gbm$pred)
 #######################################################################
 ############################ XGB ###################################### 
 #######################################################################
-
 
 
 #236

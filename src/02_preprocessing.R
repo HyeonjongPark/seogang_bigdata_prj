@@ -568,5 +568,26 @@ for(farm in unique(data2$id)) {
 }
 
 data2_1 %>%tail
+library(data.table)
+data2_1 = as.data.table(data2_1)
+# group 별 lag => 횟수 i
+
+for(i in 1:20) {
+  data2_1[, target:=c(NA, target[-.N]), by=id]
+}
+
+
+
+
+data2_1 = data2_1 %>% filter(!is.na(target))
+data2_1 = as.data.frame(data2_1)
+# 25 countdate 이후에 0인 것 NA 처리
+data2_1$target[data2_1$countDate > 25][data2_1$target[data2_1$countDate > 25] == 0] = NA
+
+data2_1 = data2_1 %>% filter(!is.na(target))
+
+data2_1[data2_1 == 0] = NA
+data2_1$target[is.na(data2_1$target)] = 0
+
 
 fwrite(data2_1, "./data/prep/train_new2.csv")
