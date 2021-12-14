@@ -21,5 +21,5 @@ library(Matrix)
 
 library(DBI)
 library(RMariaDB)
-
+library(Ckmeans.1d.dp)
 pwd = read.table("../db_password.txt", header = T)

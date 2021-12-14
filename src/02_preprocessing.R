@@ -550,7 +550,23 @@ dbDisconnect(con)
 
 
 
-getwd()
-train = fread("./data/prep/train_new.csv") %>% as.data.frame()
-train %>% head
+########################
+###  주 단위 + smartfarm 홈페이지 + farmNew ver7
+########################
 
+data2 = fread("./data/prep/train_new.csv") %>% as.data.frame()
+data2 %>% head
+
+
+data2 = data2 %>% mutate(countDate = NA)
+data2_1 = data.frame()
+for(farm in unique(data2$id)) {
+  temp = data2 %>% filter(id == farm)
+  temp$countDate = 1:nrow(temp)
+  
+  data2_1 = rbind(data2_1, temp)
+}
+
+data2_1 %>%tail
+
+fwrite(data2_1, "./data/prep/train_new2.csv")

@@ -142,13 +142,31 @@ data2 = fread("./data/prep/paprika_prep_weeks6.csv") %>% as.data.frame()
 
 ############
 
+
+
+
 #############
 ## 주 단위 + smartfarm 홈페이지 + farmNew ver7
 
-data2 = fread("./data/prep/train_new.csv") %>% as.data.frame()
+data2 = fread("./data/prep/train_new2.csv") %>% as.data.frame()
 colSums(is.na(data2))
-colnames(data2)[1] = "index"
-colnames(data2)[ncol(data2)] = "avg_outtrn"
+data2$id = as.character(data2$id)
+data2 %>% str
+dmy <- dummyVars(~., data = data2)
+data2 <- data.frame(predict(dmy, newdata = data2))
+
+data2$index = 1:nrow(data2)
+
+# 컬럼 위치 변경
+avg_outtrn = data2$target
+index = data2$index
+
+data2$target = NULL
+data2$index = NULL
+
+data2 = cbind(index, data2, avg_outtrn)
+
+
 
 ############
 
@@ -181,34 +199,46 @@ colnames(data2)[ncol(data2)] = "avg_outtrn"
 # 
 # vif(mod.lm) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
 
-data2 
+
 mod.lm1 = lm(avg_outtrn ~., data = data2[,-1])
 summary(mod.lm1)
-
+data2 %>% dim # 60개
+# 변수 선택법
 mod.lm2 = step(mod.lm1, direction = "both")
 summary(mod.lm2)
 
-data2 = data2[,c("index", "growth", "length", "new_f_height", "n_group", "f_group", "n_fruit", "TP_daytime1", "TP_daytime2", "TP_am", "TP_pm", "TP_sunset", "TP_evening", "TP_night", "HD_all", "HD_daytime1", "HD_pm", "HD_evening", "HD_dawn", "co2_all", "co2_daytime1", "co2_daytime2", "co2_sunset", "co2_evening", "co2_night", "co2_dawn", "sol", "d_g_ph", "p_water", "volume_sum", "avg_outtrn")]
+# 선택된 변수들
+data2 = data2[,c("index", "id21", "id27", "id28", "id29", "id31", "id32", "id37", "id41", "id43", "width", "new_f_height", "n_group", "f_group", "fr_group", "h_group", "n_fruit", "tp_all", "TP_daytime1", "TP_daytime2", "TP_am", "TP_pm", "TP_sunset", "TP_evening", "TP_night", "HD_all", "HD_daytime1", "HD_daytime2", "HD_am", "HD_pm", "HD_sunset", "HD_dawn", "co2_daytime1", "co2_am", "co2_pm", "co2_evening", "co2_night", "co2_dawn", "sol", "p_water", "price_mean", "countDate", "avg_outtrn")]
+data2 %>% dim # 41 개
 
-#data2 = data2[,c('index', 'growth' , 'length' , 'new_f_height' , 'n_group' , 'f_group' , 'n_fruit' , 'TP_daytime1' , 'TP_daytime2' , 'TP_am' , 'TP_pm' , 'TP_sunset' , 'TP_evening' , 'TP_night' , 'HD_all' , 'HD_daytime1' , 'HD_pm' , 'HD_evening' , 'HD_dawn' , 'co2_all' , 'co2_daytime1' , 'co2_daytime2' , 'co2_sunset' , 'co2_evening' , 'co2_night' , 'co2_dawn' , 'sol' , 'd_g_ph' , 'p_water' ,'volume_sum', 'avg_outtrn')]
+
+kk = vif_func(in_frame=data2[-c(1,ncol(data2))],thresh=10,trace=T)
+data4 = data2[,c(kk,"avg_outtrn")]
 
 
-mod.lm3 = lm(target ~ ., data = data3 )
+mod.lm3 = lm(avg_outtrn ~ ., data = data4)
 summary(mod.lm3)
-
-vif(mod.lm3) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
-
-select_col = vif(mod.lm3)<10
-data4 = data3[,select_col]
-data4 %>% colnames()
-
-mod.lm4 = lm(target ~ ., data = data4 )
+mod.lm4 = step(mod.lm3, direction = "both")
 summary(mod.lm4)
 
+data2 = data2[,c("index", "id21", "id27", "id28", "id29", "id31", "id32", "id37", "id41", "id43", "width", "new_f_height", "n_group", "h_group", "HD_pm", "HD_dawn", "co2_pm", "co2_dawn", "p_water", "price_mean", "countDate", "avg_outtrn")]
 
-#"width", "fr_group", "h_group", "co2_dawn", "sol", "d_g_ph", "p_water", "p_water_day", "volume_sum", "price_mean", "price_std"
 
-step(data2, "both")
+
+# 
+# vif(mod.lm3) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
+# 
+# select_col = vif(mod.lm3)<100
+# data4 = data3[,select_col]
+# data4 %>% colnames()
+# 
+# mod.lm4 = lm(avg_outtrn ~ ., data = data4 )
+# summary(mod.lm4)
+# 
+# 
+# #"width", "fr_group", "h_group", "co2_dawn", "sol", "d_g_ph", "p_water", "p_water_day", "volume_sum", "price_mean", "price_std"
+# 
+# step(data2, "both")
 
 
 
@@ -238,27 +268,27 @@ test$avg_outtrn = y_test
 
 
 
-# 결측이 없이 모델을 돌려야할 경우 사용
-train.imputed = rfImpute(avg_outtrn ~ ., train[,-1])
-test.imputed = rfImpute(avg_outtrn ~ ., test[,-1])
-
-train.imputed = train.imputed[c(2:ncol(train.imputed),1)]
-test.imputed = test.imputed[c(2:ncol(test.imputed),1)]
-
-
-
-
-
-#pred.lm = predict(mod.lm,test.imputed[,-c(2:12)])
-pred.lm = predict(mod.lm,test.imputed[,-ncol(test.imputed)])
-pred.lm = ifelse(pred.lm < 0, 0, pred.lm)
-
-out.lm = data.frame(id = id, 
-                    real = test$avg_outtrn, 
-                    pred = pred.lm)
-
-
-forecast::accuracy(out.lm$real, out.lm$pred+1)
+# # 결측이 없이 모델을 돌려야할 경우 사용
+# train.imputed = rfImpute(avg_outtrn ~ ., train[,-1])
+# test.imputed = rfImpute(avg_outtrn ~ ., test[,-1])
+# 
+# train.imputed = train.imputed[c(2:ncol(train.imputed),1)]
+# test.imputed = test.imputed[c(2:ncol(test.imputed),1)]
+# 
+# 
+# 
+# 
+# 
+# #pred.lm = predict(mod.lm,test.imputed[,-c(2:12)])
+# pred.lm = predict(mod.lm,test.imputed[,-ncol(test.imputed)])
+# pred.lm = ifelse(pred.lm < 0, 0, pred.lm)
+# 
+# out.lm = data.frame(id = id, 
+#                     real = test$avg_outtrn, 
+#                     pred = pred.lm)
+# 
+# 
+# forecast::accuracy(out.lm$real, out.lm$pred+1)
 
 
 
@@ -363,22 +393,21 @@ xgb_cv <- xgb.cv(data=trainSparse,
 
 
 mod.xgb = xgboost(data = trainSparse,
-                  eta = 0.08,
-                  nfold = 5, #5
-                  max_depth = 5, # 5
+                  eta = 0.09,
+                  nfold = 5, 
+                  max_depth = 10, 
                   min_child_weight = 1.2,
                   gamma = 0,
-                  nround = 100, # 70
+                  nround = 300, 
                   subsample = 1,
                   colsample_bytree = 0.5,
                   eval_metric = 'rmse',
                   verbose = 1)
 
 
-
 # 변수 중요도
 xgb_imp = xgb.importance(model = mod.xgb)
-xgb.plot.importance(xgb_imp, top_n = 20)
+xgb.ggplot.importance(importance_matrix = xgb_imp[1:20])
 
 
 pred.xgb = predict(mod.xgb,testSparse)
@@ -411,15 +440,15 @@ lgb.train = lgb.Dataset(data=train_sparse, label=y_train)
 
 
 lgb.param = list(objective = "regression", 
-              metric = "auc", 
-              learning_rate= 0.1,
-              num_leaves= 7,
-              max_depth= 4,
+              metric = "rmse", 
+              learning_rate= 0.08,
+              num_leaves= 5,
+              max_depth= 10,
               min_child_samples= 100,
               max_bin= 100,
-              subsample= 0.7, 
+              subsample= 0.5, 
               subsample_freq= 1,
-              colsample_bytree= 0.7,
+              colsample_bytree= 0.5,
               min_child_weight= 0,
               min_split_gain= 0,
               scale_pos_weight= 99.7)
@@ -436,8 +465,8 @@ lgb.normalizedgini = function(preds, dtrain){
 best.iter = 300
 
 # Train final model
-mod.lgb = lgb.train(params = lgb.param, data = lgb.train, learning_rate = 0.03,
-                    num_leaves = 60, num_threads = 30 , nrounds = best.iter,
+mod.lgb = lgb.train(params = lgb.param, data = lgb.train,
+                    num_threads = 10 , nrounds = best.iter,
                     eval_freq = 10, eval = lgb.normalizedgini)
 
 
