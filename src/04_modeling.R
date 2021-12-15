@@ -94,7 +94,7 @@ data2 %>% tail
 
 
 data2 %>% head
-
+#c('TP_daytime1','TP_daytime2','HD_daytime1','HD_daytime2','co2_daytime1','co2_daytime2',' n_group')
 ############
 
 
@@ -172,8 +172,9 @@ data2 = cbind(index, data2, avg_outtrn)
 
 data2$id = NULL
 
+data2 %>% dim
+colSums(is.na(data2))
 ############
-
 
 
 
@@ -203,7 +204,6 @@ data2$id = NULL
 # 
 # vif(mod.lm) # 10이상이면 다중공선성 존재한다고 판단 -> 없음
 
-
 mod.lm1 = lm(avg_outtrn ~., data = data2[,-1])
 summary(mod.lm1)
 data2 %>% dim # 60개
@@ -215,13 +215,13 @@ summary(mod.lm2)
 
 
 # 결측이 있는 경우 보정후 변수 선택법
-data2 = rfImpute(avg_outtrn ~ ., data2[,-1])
-data2 = data2[c(2:ncol(data2),1)]
+# data2 = rfImpute(avg_outtrn ~ ., data2[,-1])
+# data2 = data2[c(2:ncol(data2),1)]
 
 
 data2 = na.omit(data2)
-
 mod.lm1 = lm(avg_outtrn ~., data = data2[,-1])
+summary(mod.lm1)
 mod.lm2 = step(mod.lm1, direction = "both")
 summary(mod.lm2)
 
@@ -229,20 +229,21 @@ summary(mod.lm2)
 
 
 # 선택된 변수들
-data2 = data2[,c("index", "id21", "id27", "id28", "id29", "id31", "id32", "id37", "id41", "id43", "width", "new_f_height", "n_group", "f_group", "fr_group", "h_group", "n_fruit", "tp_all", "TP_daytime1", "TP_daytime2", "TP_am", "TP_pm", "TP_sunset", "TP_evening", "TP_night", "HD_all", "HD_daytime1", "HD_daytime2", "HD_am", "HD_pm", "HD_sunset", "HD_dawn", "co2_daytime1", "co2_am", "co2_pm", "co2_evening", "co2_night", "co2_dawn", "sol", "p_water", "price_mean", "countDate", "avg_outtrn")]
+data2 = data2[,c("index", "growth", "n_leaf", "length", "width", "new_f_height", "f_group", "tp_all", "TP_sunset", "TP_night", "HD_all", "HD_am", "HD_pm", "co2_all", "co2_pm", "co2_sunset", "co2_evening", "co2_dawn", "sol", "d_g_ph", "p_water", "p_water_day", "price_mean", "price_std", "countDate", "avg_outtrn")]
 data2 %>% dim # 41 개
 
 
-kk = vif_func(in_frame=data2[-c(1,ncol(data2))],thresh=10,trace=T)
-data4 = data2[,c(kk,"avg_outtrn")]
+# kk = vif_func(in_frame=data2[-c(1,ncol(data2))],thresh=10,trace=T)
+# data4 = data2[,c(kk,"avg_outtrn")]
+# data4 %>% dim
+# 
+# mod.lm3 = lm(avg_outtrn ~ ., data = data4)
+# summary(mod.lm3)
 
-
-mod.lm3 = lm(avg_outtrn ~ ., data = data4)
-summary(mod.lm3)
-mod.lm4 = step(mod.lm3, direction = "both")
-summary(mod.lm4)
-
-data2 = data2[,c("index", "id21", "id27", "id28", "id29", "id31", "id32", "id37", "id41", "id43", "width", "new_f_height", "n_group", "h_group", "HD_pm", "HD_dawn", "co2_pm", "co2_dawn", "p_water", "price_mean", "countDate", "avg_outtrn")]
+# mod.lm4 = step(mod.lm3, direction = "both")
+# summary(mod.lm4)
+# 
+# data2 = data2[,c("index", "id21", "id27", "id28", "id29", "id31", "id32", "id37", "id41", "id43", "width", "new_f_height", "n_group", "h_group", "HD_pm", "HD_dawn", "co2_pm", "co2_dawn", "p_water", "price_mean", "countDate", "avg_outtrn")]
 
 
 # 
@@ -415,7 +416,7 @@ xgb_cv <- xgb.cv(data=trainSparse,
                  print_every_n = 5
 )
 
-
+mod.xgb = xgboost(data = trainSparse, nrounds = 300)
 mod.xgb = xgboost(data = trainSparse,
                   eta = 0.09,
                   nfold = 5, 
