@@ -1,4 +1,4 @@
-
+rm(list = ls())
 ########################
 ###  주 단위 + smartfarm 홈페이지 + farmNew ver7
 ########################
@@ -21,7 +21,7 @@ library(data.table)
 data2_1 = as.data.table(data2_1)
 # group 별 lag => 횟수 i
 
-data2_1$target = lead(data2_1$target, 9)
+data2_1$target = lead(data2_1$target, 2)
 
 # for(i in 1:3) {
 #   data2_1[, target:=c(NA, target[-.N]), by=id]
@@ -80,7 +80,7 @@ colSums(is.na(data2))
 ############
 
 data2 = rfImpute(avg_outtrn ~ ., data2[,-1])
-
+data2 = data2[c(2:ncol(data2),1)]
 
 
 mod.lm1 = lm(avg_outtrn ~., data = data2[,-1])
@@ -88,12 +88,22 @@ summary(mod.lm1)
 data2 %>% dim # 60개
 
 
+# am : 6 ~ 12
+# pm : 12 ~ 17
+# sun : 17 ~ 19
+# eve : 19 ~ 22
+# nig : 22 ~ 02
+# daw : 02 ~ 06
+
+cor(data2)
+
+
 #data2 = na.omit(data2)
 
 mod.lm2 = step(mod.lm1, direction = "both")
 summary(mod.lm2)
 
-#fwrite(data2, "./data/prep/final_train_new")
+#fwrite(data2, "./data/prep/final_train_new2.csv")
 
 #c("index", "growth", "width", "new_f_height", "f_group", "fr_group", "n_fruit", "tp_all", "TP_am", "TP_pm", "TP_sunset", "TP_evening", "TP_night", "HD_all", "HD_sunset", "HD_night", "HD_dawn", "co2_all", "co2_am", "co2_pm", "co2_evening", "co2_night", "sol", "d_num", "p_water", "p_water_day", "volume_sum", "price_std", "avg_outtrn")
 
