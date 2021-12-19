@@ -1,11 +1,12 @@
 rm(list = ls())
+source("./src/00_libs.R")
+
 ########################
 ###  주 단위 + smartfarm 홈페이지 + farmNew ver7
 ########################
 
 data2 = fread("./data/prep/train_new.csv") %>% as.data.frame()
 data2 %>% head
-data2
 
 data2 = data2 %>% mutate(countDate = NA)
 data2_1 = data.frame()
@@ -16,17 +17,10 @@ for(farm in unique(data2$id)) {
   data2_1 = rbind(data2_1, temp)
 }
 
-data2_1 %>%tail
-library(data.table)
 data2_1 = as.data.table(data2_1)
 # group 별 lag => 횟수 i
 
 data2_1$target = lead(data2_1$target, 2)
-
-# for(i in 1:3) {
-#   data2_1[, target:=c(NA, target[-.N]), by=id]
-# }
-
 
 
 data2_1 = data2_1 %>% filter(!is.na(target))
